@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Debate Arena — Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#10142A; --panel:#191F3D; --line:#2B3260; --gold:#D9A441;
+    --ink:#ECEDF4; --ink-muted:#8B90B0;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:'Inter',sans-serif; padding: 24px 20px 60px; max-width: 640px; margin-inline: auto;
+  }
+  h1 { font-family:'Fraunces',serif; font-size: 26px; margin-bottom: 4px; }
+  .sub { color: var(--ink-muted); font-size: 14px; margin-bottom: 28px; }
+  label { display:block; font-size: 13px; color: var(--ink-muted); margin: 16px 0 6px; }
+  input, select {
+    width:100%; background:var(--panel); border:1px solid var(--line); border-radius:10px;
+    padding:12px 14px; color:var(--ink); font-family:'Inter',sans-serif; font-size:15px;
+  }
+  button {
+    margin-top: 22px; width:100%; background:var(--gold); color:#1A1206; border:none;
+    border-radius:10px; padding:14px; font-weight:700; font-size:15px; cursor:pointer;
+  }
+  .section { margin-top: 44px; padding-top: 24px; border-top: 1px solid var(--line); }
+  .item {
+    background:var(--panel); border:1px solid var(--line); border-radius:10px;
+    padding:14px; margin-bottom: 10px; display:flex; justify-content:space-between; align-items:center; gap:10px;
+  }
+  .item .title { font-size:14px; }
+  .item .meta { font-size:12px; color:var(--ink-muted); margin-top:2px; }
+  .item button { margin:0; width:auto; padding:8px 14px; font-size:13px; }
+  .item .reject { background:var(--line); color:var(--ink); }
+  .status { font-size: 13px; margin-top: 10px; min-height: 18px; }
+  .status.ok { color: #6FCF97; }
+  .status.err { color: #E27878; }
+</style>
+</head>
+<body>
+
+  <h1>Debate Arena — Admin</h1>
+  <p class="sub">Add topics directly, or review what users have suggested.</p>
+
+  <label>Backend URL</label>
+  <input id="backend-url" placeholder="https://debate-arena-backend-4bk2.onrender.com" value="https://debate-arena-backend-4bk2.onrender.com">
+
+  <label>Your Telegram ID (used as "added by")</label>
+  <input id="admin-id" placeholder="e.g. 123456789">
+
+  <label>Admin Key <span style="color:var(--ink-muted);">(set as ADMIN_KEY on Render)</span></label>
+  <input id="admin-key" type="password" placeholder="Your secret admin key">
+
+  <div class="section">
+    <h2 style="font-family:'Fraunces',serif; font-size:18px; margin:0 0 4px;">Add a topic</h2>
+    <label>Topic (English)</label>
+    <input id="title-en" placeholder="Should plastic bags be banned in the city?">
+    <label>State</label>
+    <input id="topic-state" placeholder="e.g. Maharashtra">
+    <label>District (leave blank for state-wide)</label>
+    <input id="topic-district" placeholder="e.g. Pune">
+    <button onclick="addTopic()">Add Topic (auto-approved)</button>
+    <div id="add-status" class="status"></div>
+  </div>
+
+  <div class="section">
+    <h2 style="font-family:'Fraunces',serif; font-size:18px; margin:0 0 4px;">Pending suggestions</h2>
+    <label>State to review</label>
+    <input id="review-state" placeholder="e.g. Maharashtra">
+    <button onclick="loadPending()" style="background:var(--panel-raised, #212850); color:var(--ink);">Load pending</button>
+    <div id="pending-list" style="margin-top:16px;"></div>
+  </div>
+
+  <div class="section">
+    <h2 style="font-family:'Fraunces',serif; font-size:18px; margin:0 0 4px;">Screen backgrounds</h2>
+    <p class="sub" style="margin-bottom:14px;">Paste an image URL for each screen — updates instantly, no code changes needed.</p>
+    <label>Home screen background (image URL)</label>
+    <input id="home-bg" placeholder="https://...">
+    <label>Messages screen background (image URL)</label>
+    <input id="messages-bg" placeholder="https://...">
+    <label>Account screen background (image URL)</label>
+    <input id="account-bg" placeholder="https://...">
+    <label>National anthem audio (URL — plays when host starts a debate)</label>
+    <input id="anthem-url" placeholder="https://... (an .mp3 or .m4a file you have rights to use)">
+    <button onclick="saveBackgrounds()">Save Backgrounds</button>
+    <div id="bg-status" class="status"></div>
+  </div>
+
+  <div class="section">
+    <h2 style="font-family:'Fraunces',serif; font-size:18px; margin:0 0 4px;">Active rooms</h2>
+    <p class="sub" style="margin-bottom:14px;">Monitor live debates, warn a host, or force-close a room.</p>
+    <button onclick="loadActiveRooms()" style="background:var(--panel-raised, #212850); color:var(--ink); margin-top:0;">Refresh active rooms</button>
+    <div id="rooms-list" style="margin-top:16px;"></div>
+  </div>
+
+  <div class="section">
+    <h2 style="font-family:'Fraunces',serif; font-size:18px; margin:0 0 4px;">Ban a user</h2>
+    <label>User's Telegram ID</label>
+    <input id="ban-id" placeholder="e.g. 987654321">
+    <label>Ban type</label>
+    <select id="ban-type">
+      <option value="temporary">Temporary</option>
+      <option value="permanent">Permanent</option>
+    </select>
+    <label>Hours (only for temporary)</label>
+    <input id="ban-hours" placeholder="e.g. 24">
+    <label>Reason (optional)</label>
+    <input id="ban-reason" placeholder="e.g. Vulgar language in room">
+    <button onclick="banUser()">Ban User</button>
+    <div id="ban-status" class="status"></div>
+  </div>
+
+<script>
+  function backendUrl() { return document.getElementById('backend-url').value.replace(/\/$/, ''); }
+  function adminHeaders() {
+    return { "Content-Type": "application/json", "X-Admin-Key": document.getElementById('admin-key').value };
+  }
+
+  async function addTopic() {
+    const statusEl = document.getElementById('add-status');
+    const body = {
+      title_en: document.getElementById('title-en').value.trim(),
+      state: document.getElementById('topic-state').value.trim(),
+      district: document.getElementById('topic-district').value.trim() || null,
+      created_by: parseInt(document.getElementById('admin-id').value) || 0,
+    };
+    if (!body.title_en || !body.state) {
+      statusEl.textContent = "Topic and state are required.";
+      statusEl.className = "status err";
+      return;
+    }
+    try {
+      const res = await fetch(`${backendUrl()}/topics?is_admin=true`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) throw new Error();
+      statusEl.textContent = "Topic added and live.";
+      statusEl.className = "status ok";
+      document.getElementById('title-en').value = '';
+    } catch (e) {
+      statusEl.textContent = "Failed to add — check the backend URL and try again.";
+      statusEl.className = "status err";
+    }
+  }
+
+  async function loadPending() {
+    const state = document.getElementById('review-state').value.trim();
+    const listEl = document.getElementById('pending-list');
+    if (!state) { listEl.innerHTML = '<p style="color:var(--ink-muted); font-size:13px;">Enter a state first.</p>'; return; }
+    listEl.innerHTML = '<p style="color:var(--ink-muted); font-size:13px;">Loading…</p>';
+    try {
+      const res = await fetch(`${backendUrl()}/topics?state=${encodeURIComponent(state)}&status=pending`);
+      const topics = await res.json();
+      if (!topics.length) {
+        listEl.innerHTML = '<p style="color:var(--ink-muted); font-size:13px;">No pending suggestions.</p>';
+        return;
+      }
+      listEl.innerHTML = '';
+      topics.forEach(t => {
+        const div = document.createElement('div');
+        div.className = 'item';
+        div.innerHTML = `
+          <div>
+            <div class="title">${t.title_en}</div>
+            <div class="meta">${t.district || t.state + ' (state-wide)'}</div>
+          </div>
+          <div style="display:flex; gap:6px;">
+            <button onclick="review('${t.id}', true)">Approve</button>
+            <button class="reject" onclick="review('${t.id}', false)">Reject</button>
+          </div>`;
+        listEl.appendChild(div);
+      });
+    } catch (e) {
+      listEl.innerHTML = '<p style="color:#E27878; font-size:13px;">Failed to load.</p>';
+    }
+  }
+
+  async function review(topicId, approve) {
+    try {
+      await fetch(`${backendUrl()}/topics/${topicId}/review`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ approve }),
+      });
+      loadPending();
+    } catch (e) {
+      alert("Failed — try again.");
+    }
+  }
+
+  async function saveBackgrounds() {
+    const statusEl = document.getElementById('bg-status');
+    const body = {
+      home_bg: document.getElementById('home-bg').value.trim() || null,
+      messages_bg: document.getElementById('messages-bg').value.trim() || null,
+      account_bg: document.getElementById('account-bg').value.trim() || null,
+      anthem_audio_url: document.getElementById('anthem-url').value.trim() || null,
+    };
+    try {
+      const res = await fetch(`${backendUrl()}/settings`, {
+        method: "POST",
+        headers: adminHeaders(),
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) throw new Error();
+      statusEl.textContent = "Backgrounds updated.";
+      statusEl.className = "status ok";
+    } catch (e) {
+      statusEl.textContent = "Failed — check your Admin Key.";
+      statusEl.className = "status err";
+    }
+  }
+
+  async function loadActiveRooms() {
+    const listEl = document.getElementById('rooms-list');
+    listEl.innerHTML = '<p style="color:var(--ink-muted); font-size:13px;">Loading…</p>';
+    try {
+      const res = await fetch(`${backendUrl()}/admin/rooms/active`, { headers: adminHeaders() });
+      if (!res.ok) throw new Error();
+      const rooms = await res.json();
+      if (!rooms.length) {
+        listEl.innerHTML = '<p style="color:var(--ink-muted); font-size:13px;">No active rooms right now.</p>';
+        return;
+      }
+      listEl.innerHTML = '';
+      rooms.forEach(r => {
+        const seatCount = (r.pro_seats?.length || 0) + (r.con_seats?.length || 0);
+        const div = document.createElement('div');
+        div.className = 'item';
+        div.style.flexDirection = 'column';
+        div.style.alignItems = 'stretch';
+        div.innerHTML = `
+          <div style="margin-bottom:8px;">
+            <div class="title">${r.topic_title}</div>
+            <div class="meta">Host: ${r.host_telegram_id} · ${seatCount}/8 seats · status: ${r.status}</div>
+          </div>
+          <div style="display:flex; gap:6px; flex-wrap:wrap;">
+            <button onclick="warnHost('${r.id}')">Warn Host</button>
+            <button class="reject" onclick="closeRoom('${r.id}')">Force Close</button>
+          </div>`;
+        listEl.appendChild(div);
+      });
+    } catch (e) {
+      listEl.innerHTML = '<p style="color:#E27878; font-size:13px;">Failed to load — check your Admin Key.</p>';
+    }
+  }
+
+  async function warnHost(roomId) {
+    const message = prompt("Warning message to send the host:");
+    if (!message) return;
+    try {
+      await fetch(`${backendUrl()}/admin/rooms/${roomId}/warn-host`, {
+        method: "POST", headers: adminHeaders(), body: JSON.stringify({ message }),
+      });
+      alert("Warning recorded.");
+    } catch (e) { alert("Failed to send warning."); }
+  }
+
+  async function closeRoom(roomId) {
+    if (!confirm("Force-close this room now?")) return;
+    try {
+      await fetch(`${backendUrl()}/admin/rooms/${roomId}/close`, { method: "POST", headers: adminHeaders() });
+      loadActiveRooms();
+    } catch (e) { alert("Failed to close room."); }
+  }
+
+  async function banUser() {
+    const statusEl = document.getElementById('ban-status');
+    const telegramId = parseInt(document.getElementById('ban-id').value);
+    const banType = document.getElementById('ban-type').value;
+    const hours = parseInt(document.getElementById('ban-hours').value) || null;
+    const reason = document.getElementById('ban-reason').value.trim() || null;
+
+    if (!telegramId) {
+      statusEl.textContent = "Enter a valid Telegram ID.";
+      statusEl.className = "status err";
+      return;
+    }
+    try {
+      const res = await fetch(`${backendUrl()}/admin/users/${telegramId}/ban`, {
+        method: "POST",
+        headers: adminHeaders(),
+        body: JSON.stringify({ telegram_id: telegramId, ban_type: banType, hours, reason }),
+      });
+      if (!res.ok) throw new Error();
+      statusEl.textContent = "User banned.";
+      statusEl.className = "status ok";
+    } catch (e) {
+      statusEl.textContent = "Failed — check your Admin Key.";
+      statusEl.className = "status err";
+    }
+  }
+</script>
+</body>
+</html>
