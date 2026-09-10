@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Debate Arena — Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#10142A; --panel:#191F3D; --panel-raised:#212850; --line:#2B3260; --gold:#D9A441;
+    --ink:#ECEDF4; --ink-muted:#8B90B0; --con:#B2503F;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:'Inter',sans-serif; padding: 24px 20px 60px; max-width: 640px; margin-inline: auto;
+  }
+  h1 { font-family:'Fraunces',serif; font-size: 26px; margin-bottom: 4px; }
+  .sub { color: var(--ink-muted); font-size: 14px; margin-bottom: 28px; }
+  label { display:block; font-size: 13px; color: var(--ink-muted); margin: 16px 0 6px; }
+  input, select {
+    width:100%; background:var(--panel); border:1px solid var(--line); border-radius:10px;
+    padding:12px 14px; color:var(--ink); font-family:'Inter',sans-serif; font-size:15px;
+  }
+  button {
+    margin-top: 22px; width:100%; background:var(--gold); color:#1A1206; border:none;
+    border-radius:10px; padding:14px; font-weight:700; font-size:15px; cursor:pointer;
+  }
+  .section { margin-top: 44px; padding-top: 24px; border-top: 1px solid var(--line); }
+  .item {
+    background:var(--panel); border:1px solid var(--line); border-radius:10px;
+    padding:14px; margin-bottom: 10px;
+  }
+  .item .title { font-size:14px; font-weight:600; }
+  .item .meta { font-size:12px; color:var(--ink-muted); margin-top:2px; }
+  .item .actions { display:flex; gap:6px; flex-wrap:wrap; margin-top:10px; }
+  .item .actions button { margin:0; width:auto; padding:8px 14px; font-size:13px; }
+  .item .actions .reject { background:var(--line); color:var(--ink); }
+  .status { font-size: 13px; margin-top: 10px; min-height: 18px; }
+  .status.ok { color: #6FCF97; }
+  .status.err { color: #E27878; }
+
+  .person-row {
+    display:flex; justify-content:space-between; align-items:center;
+    background:var(--panel-raised); border-radius:8px; padding:9px 12px; margin-bottom:6px; font-size:13px;
+  }
+  .person-row .p-tag { color: var(--ink-muted); font-size:11px; }
+  .person-row .p-actions { display:flex; gap:6px; }
+  .person-row .p-actions button {
+    margin:0; width:auto; padding:5px 9px; font-size:11px; background:var(--line); color:var(--ink); font-weight:600;
+  }
+  .person-row .p-actions .perm { background: var(--con); color:#fff; }
+  .participants-panel { margin-top:10px; padding-top:10px; border-top:1px dashed var(--line); }
+  .group-label { font-size:11px; text-transform:uppercase; letter-spacing:0.04em; color:var(--ink-muted); margin:10px 0 4px; }
+</style>
+</head>
+<body>
+
+  <h1>Debate Arena — Admin</h1>
+  <p class="sub">Manage backgrounds and moderate live rooms.</p>
+
+  <label>Backend URL</label>
+  <input id="backend-url" placeholder="https://debate-arena-backend-4bk2.onrender.com" value="https://debate-arena-backend-4bk2.onrender.com">
+
+  <label>Admin Key <span style="color:var(--ink-muted);">(set as ADMIN_KEY on Render)</span></label>
+  <input id="admin-key" type="password" placeholder="Your secret admin key">
+
+  <div class="section">
+    <h2 style="font-family:'Fraunces',serif; font-size:18px; margin:0 0 4px;">Screen backgrounds</h2>
+    <p class="sub" style="margin-bottom:14px;">Upload a .jpg for each screen — save your files with these exact names on your device, then pick them here. Uploading a new one instantly replaces the old image, no code changes needed.</p>
+    <label>Logo <span style="color:var(--ink-muted);">— save as logo.jpg</span></label>
+    <input type="file" id="logo-file" accept="image/*">
+    <label>Home screen background <span style="color:var(--ink-muted);">— save as homescreen.jpg</span></label>
+    <input type="file" id="home-file" accept="image/*">
+    <label>Chat / Messages screen background <span style="color:var(--ink-muted);">— save as chatscreen.jpg</span></label>
+    <input type="file" id="chat-file" accept="image/*">
+    <label>Account screen background <span style="color:var(--ink-muted);">— save as accountscreen.jpg</span></label>
+    <input type="file" id="account-file" accept="image/*">
+    <label>Active Rooms background <span style="color:var(--ink-muted);">— save as activerooms.jpg</span></label>
+    <input type="file" id="active-rooms-file" accept="image/*">
+    <label>Upcoming Rooms background <span style="color:var(--ink-muted);">— save as upcomingrooms.jpg</span></label>
+    <input type="file" id="upcoming-rooms-file" accept="image/*">
+    <label>National anthem audio (URL — plays when host starts a debate)</label>
+    <input id="anthem-url" placeholder="https://... (an .mp3 or .m4a file you have rights to use)">
+    <label>Host application questions <span style="color:var(--ink-muted);">(one per line)</span></label>
+    <textarea id="host-questions" rows="4" style="width:100%; background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:12px 14px; color:var(--ink); font-family:'Inter',sans-serif; font-size:14px;" placeholder="Why do you want to host debates on this app?
+How will you keep the debate respectful and on-topic?
+Describe a time you moderated or led a group discussion."></textarea>
+    <button onclick="saveBackgrounds()">Save Backgrounds &amp; Logo</button>
+    <div id="bg-status" class="status"></div>
+  </div>
+
+  <div class="section">
+    <h2 style="font-family:'Fraunces',serif; font-size:18px; margin:0 0 4px;">Host Requests</h2>
+    <p class="sub" style="margin-bottom:14px;">Anyone who's applied to become a host — review their answers, then WhatsApp them to verify before approving.</p>
+    <button onclick="loadHostRequests()" style="background:var(--panel-raised); color:var(--ink); margin-top:0;">Refresh requests</button>
+    <div id="host-requests-list" style="margin-top:16px;"></div>
+  </div>
+
+  <div class="section">
+    <h2 style="font-family:'Fraunces',serif; font-size:18px; margin:0 0 4px;">Active &amp; upcoming rooms</h2>
+    <p class="sub" style="margin-bottom:14px;">Open a room to see everyone in it — seat by seat, plus anyone who's chatted — and ban right from there.</p>
+    <button onclick="loadActiveRooms()" style="background:var(--panel-raised); color:var(--ink); margin-top:0;">Refresh rooms</button>
+    <div id="rooms-list" style="margin-top:16px;"></div>
+  </div>
+
+<script>
+  function backendUrl() { return document.getElementById('backend-url').value.replace(/\/$/, ''); }
+  function adminHeaders() {
+    return { "Content-Type": "application/json", "X-Admin-Key": document.getElementById('admin-key').value };
+  }
+
+  function readFileAsBase64(inputEl, maxWidth = 1600, quality = 0.75) {
+    return new Promise((resolve) => {
+      const file = inputEl.files[0];
+      if (!file) { resolve(null); return; }
+
+      const reader = new FileReader();
+      reader.onerror = () => resolve(null);
+      reader.onload = () => {
+        const img = new Image();
+        img.onerror = () => resolve(reader.result); // fallback: use original if compression fails
+        img.onload = () => {
+          const scale = Math.min(1, maxWidth / img.width);
+          const canvas = document.createElement('canvas');
+          canvas.width = Math.round(img.width * scale);
+          canvas.height = Math.round(img.height * scale);
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          resolve(canvas.toDataURL('image/jpeg', quality));
+        };
+        img.src = reader.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async function saveBackgrounds() {
+    const statusEl = document.getElementById('bg-status');
+    statusEl.textContent = "Uploading…";
+    statusEl.className = "status";
+
+    const [logo, home, chat, account, activeRooms, upcomingRooms] = await Promise.all([
+      readFileAsBase64(document.getElementById('logo-file')),
+      readFileAsBase64(document.getElementById('home-file')),
+      readFileAsBase64(document.getElementById('chat-file')),
+      readFileAsBase64(document.getElementById('account-file')),
+      readFileAsBase64(document.getElementById('active-rooms-file')),
+      readFileAsBase64(document.getElementById('upcoming-rooms-file')),
+    ]);
+
+    const body = {
+      logo_image: logo,
+      home_bg: home,
+      messages_bg: chat,
+      account_bg: account,
+      active_rooms_bg: activeRooms,
+      upcoming_rooms_bg: upcomingRooms,
+      anthem_audio_url: document.getElementById('anthem-url').value.trim() || null,
+      host_questions: document.getElementById('host-questions').value
+        .split('\n').map(q => q.trim()).filter(Boolean) || null,
+    };
+    // Only send fields that actually have a new value — leaves other images untouched.
+    Object.keys(body).forEach(k => { if (body[k] === null) delete body[k]; });
+
+    try {
+      const res = await fetch(`${backendUrl()}/settings`, {
+        method: "POST",
+        headers: adminHeaders(),
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        const errText = await res.text();
+        throw new Error(`HTTP ${res.status}: ${errText}`);
+      }
+      statusEl.textContent = "Saved — the app will pick up the new images right away.";
+      statusEl.className = "status ok";
+    } catch (e) {
+      statusEl.textContent = "Failed — " + (e.message || "unknown error");
+      statusEl.className = "status err";
+    }
+  }
+
+  async function loadHostRequests() {
+    const listEl = document.getElementById('host-requests-list');
+    listEl.innerHTML = '<p style="color:var(--ink-muted); font-size:13px;">Loading…</p>';
+    try {
+      const res = await fetch(`${backendUrl()}/admin/host-applications?status=pending`, { headers: adminHeaders() });
+      if (!res.ok) {
+        const errText = await res.text();
+        throw new Error(`HTTP ${res.status}: ${errText}`);
+      }
+      const apps = await res.json();
+      if (!apps.length) {
+        listEl.innerHTML = '<p style="color:var(--ink-muted); font-size:13px;">No pending host requests.</p>';
+        return;
+      }
+      listEl.innerHTML = '';
+      apps.forEach(a => {
+        const div = document.createElement('div');
+        div.className = 'item';
+        const qa = a.answers.map((ans, i) => `<div class="meta" style="margin-top:4px;">${i + 1}. ${ans}</div>`).join('');
+        const waDigits = (a.whatsapp_number || '').replace(/\D/g, '');
+        div.innerHTML = `
+          <div class="title">${a.name} <span class="p-tag">#${a.telegram_id}</span></div>
+          ${qa}
+          <div class="meta" style="margin-top:8px;">
+            WhatsApp: <a href="https://wa.me/${waDigits}" target="_blank" style="color:var(--gold);">${a.whatsapp_number}</a>
+          </div>
+          <div class="actions">
+            <button onclick="reviewHostApplication(${a.telegram_id}, true)">Approve</button>
+            <button class="reject" onclick="reviewHostApplication(${a.telegram_id}, false)">Reject</button>
+          </div>`;
+        listEl.appendChild(div);
+      });
+    } catch (e) {
+      listEl.innerHTML = `<p style="color:#E27878; font-size:13px;">Failed to load — ${e.message || 'unknown error'}</p>`;
+    }
+  }
+
+
+  async function reviewHostApplication(telegramId, approve) {
+    try {
+      await fetch(`${backendUrl()}/admin/host-applications/${telegramId}/review`, {
+        method: "POST", headers: adminHeaders(), body: JSON.stringify({ approve }),
+      });
+      loadHostRequests();
+    } catch (e) { alert("Failed — try again."); }
+  }
+
+  async function loadActiveRooms() {
+    const listEl = document.getElementById('rooms-list');
+    listEl.innerHTML = '<p style="color:var(--ink-muted); font-size:13px;">Loading…</p>';
+    try {
+      const res = await fetch(`${backendUrl()}/admin/rooms/active`, { headers: adminHeaders() });
+      if (!res.ok) throw new Error();
+      const rooms = await res.json();
+      if (!rooms.length) {
+        listEl.innerHTML = '<p style="color:var(--ink-muted); font-size:13px;">No active or upcoming rooms right now.</p>';
+        return;
+      }
+      listEl.innerHTML = '';
+      rooms.forEach(r => {
+        const seatCount = (r.pro_seats?.length || 0) + (r.con_seats?.length || 0);
+        const div = document.createElement('div');
+        div.className = 'item';
+        div.innerHTML = `
+          <div class="title">${r.topic_title}</div>
+          <div class="meta">${seatCount}/8 seats · status: ${r.status}</div>
+          <div class="actions">
+            <button onclick="toggleParticipants('${r.id}', this)">View participants</button>
+            <button onclick="warnHost('${r.id}')">Warn Host</button>
+            <button class="reject" onclick="closeRoom('${r.id}')">Force Close</button>
+          </div>
+          <div class="participants-panel" id="panel-${r.id}" style="display:none;"></div>`;
+        listEl.appendChild(div);
+      });
+    } catch (e) {
+      listEl.innerHTML = '<p style="color:#E27878; font-size:13px;">Failed to load — check your Admin Key.</p>';
+    }
+  }
+
+  async function toggleParticipants(roomId, btn) {
+    const panel = document.getElementById(`panel-${roomId}`);
+    const isOpen = panel.style.display === 'block';
+    panel.style.display = isOpen ? 'none' : 'block';
+    if (isOpen) return;
+
+    panel.innerHTML = '<p style="color:var(--ink-muted); font-size:13px;">Loading…</p>';
+    try {
+      const res = await fetch(`${backendUrl()}/admin/rooms/${roomId}/participants`, { headers: adminHeaders() });
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      panel.innerHTML = '';
+
+      const addGroup = (label, people) => {
+        if (!people.length) return;
+        const groupLabel = document.createElement('div');
+        groupLabel.className = 'group-label';
+        groupLabel.textContent = label;
+        panel.appendChild(groupLabel);
+        people.forEach(p => panel.appendChild(personRow(p)));
+      };
+
+      addGroup('Host', [data.host]);
+      addGroup('For (Pro)', data.pro_seats);
+      addGroup('Against (Con)', data.con_seats);
+      addGroup('Approved guests', data.guests);
+      addGroup('Chatted', data.chatters);
+    } catch (e) {
+      panel.innerHTML = '<p style="color:#E27878; font-size:13px;">Failed to load participants.</p>';
+    }
+  }
+
+  function personRow(p) {
+    const row = document.createElement('div');
+    row.className = 'person-row';
+    row.innerHTML = `
+      <div>${p.name} <span class="p-tag">#${p.telegram_id}</span></div>
+      <div class="p-actions">
+        <button onclick="banFromRoom(${p.telegram_id}, 'temporary')">Temp Ban</button>
+        <button class="perm" onclick="banFromRoom(${p.telegram_id}, 'permanent')">Perm Ban</button>
+      </div>`;
+    return row;
+  }
+
+  async function banFromRoom(telegramId, banType) {
+    let hours = null;
+    if (banType === 'temporary') {
+      hours = parseInt(prompt("Ban for how many hours?", "24"));
+      if (!hours) return;
+    } else if (!confirm("Permanently ban this user?")) {
+      return;
+    }
+    const reason = prompt("Reason (optional):") || null;
+    try {
+      const res = await fetch(`${backendUrl()}/admin/users/${telegramId}/ban`, {
+        method: "POST",
+        headers: adminHeaders(),
+        body: JSON.stringify({ telegram_id: telegramId, ban_type: banType, hours, reason }),
+      });
+      if (!res.ok) throw new Error();
+      alert("User banned.");
+    } catch (e) {
+      alert("Failed — check your Admin Key.");
+    }
+  }
+
+  async function warnHost(roomId) {
+    const message = prompt("Warning message to send the host:");
+    if (!message) return;
+    try {
+      await fetch(`${backendUrl()}/admin/rooms/${roomId}/warn-host`, {
+        method: "POST", headers: adminHeaders(), body: JSON.stringify({ message }),
+      });
+      alert("Warning recorded.");
+    } catch (e) { alert("Failed to send warning."); }
+  }
+
+  async function closeRoom(roomId) {
+    if (!confirm("Force-close this room now?")) return;
+    try {
+      await fetch(`${backendUrl()}/admin/rooms/${roomId}/close`, { method: "POST", headers: adminHeaders() });
+      loadActiveRooms();
+    } catch (e) { alert("Failed to close room."); }
+  }
+</script>
+</body>
+</html>
